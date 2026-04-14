@@ -10,4 +10,7 @@ public class TokenUtil {
     public String generateToken(Long userId) {
         return UUID.randomUUID() + ":" + userId;
     }
+    public Long getUserIdFromToken(String token) {
+        return Long.parseLong(token.split(":")[1]);
+    }
 }
