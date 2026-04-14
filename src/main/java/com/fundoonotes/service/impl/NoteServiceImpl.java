@@ -9,8 +9,6 @@ import com.fundoonotes.repository.NoteRepository;
 import com.fundoonotes.repository.UserRepository;
 import com.fundoonotes.service.NoteService;
 import com.fundoonotes.util.TokenUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,8 +16,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class NoteServiceImpl implements NoteService {
-
-    private static final Logger log = LoggerFactory.getLogger(NoteServiceImpl.class);
 
     private final NoteRepository noteRepository;
     private final UserRepository userRepository;
@@ -33,76 +29,62 @@ public class NoteServiceImpl implements NoteService {
         this.tokenUtil = tokenUtil;
     }
 
+    // 🔥 CREATE NOTE
     @Override
     public NoteResponseDto createNote(NoteRequestDto dto, String token) {
 
-        log.info("Creating note");
-
+        // 1. Get userId from token
         Long userId = tokenUtil.getUserIdFromToken(token);
 
+        // 2. Find user in DB
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
+        // 3. Create note object
         Note note = new Note();
         note.setTitle(dto.getTitle());
         note.setDescription(dto.getDescription());
         note.setUser(user);
 
-        Note saved = noteRepository.save(note);
+        // 4. Save to DB
+        Note savedNote = noteRepository.save(note);
 
-        return mapToResponse(saved);
+        // 5. Convert to response
+        return mapToResponse(savedNote);
     }
 
+    // 🔥 GET ALL NOTES
     @Override
     public List<NoteResponseDto> getAllNotes(String token) {
 
+        // 1. Get userId
         Long userId = tokenUtil.getUserIdFromToken(token);
 
-        return noteRepository.findByUserId(userId)
-                .stream()
+        // 2. Fetch notes from DB
+        List<Note> notes = noteRepository.findByUserId(userId);
+
+        // 3. Convert list → response DTO
+        return notes.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     public NoteResponseDto pinNote(Long noteId, String token) {
-
-        Note note = noteRepository.findById(noteId)
-                .orElseThrow(() -> new RuntimeException("Note not found"));
-
-        note.setPinned(!note.isPinned());
-
-        log.info("Toggled pin for note {}", noteId);
-
-        return mapToResponse(noteRepository.save(note));
+        return null;
     }
 
     @Override
     public NoteResponseDto archiveNote(Long noteId, String token) {
-
-        Note note = noteRepository.findById(noteId)
-                .orElseThrow(() -> new RuntimeException("Note not found"));
-
-        note.setArchived(!note.isArchived());
-
-        log.info("Toggled archive for note {}", noteId);
-
-        return mapToResponse(noteRepository.save(note));
+        return null;
     }
 
     @Override
     public NoteResponseDto trashNote(Long noteId, String token) {
-
-        Note note = noteRepository.findById(noteId)
-                .orElseThrow(() -> new RuntimeException("Note not found"));
-
-        note.setTrashed(!note.isTrashed());
-
-        log.info("Toggled trash for note {}", noteId);
-
-        return mapToResponse(noteRepository.save(note));
+        return null;
     }
 
+    // 🔥 HELPER METHOD (convert entity → DTO)
     private NoteResponseDto mapToResponse(Note note) {
         return new NoteResponseDto(
                 note.getId(),
